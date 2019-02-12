@@ -7,6 +7,7 @@ server = 'vminformdev01'
 database = 'GI_VS_SC_Test' 
 es_base_url = 'http://10.11.1.70:9200/'
 es_index_name = 'foo'
+headers = {'Content-Type':'application/json'}
 
 #delete and create index in ES
 
@@ -26,7 +27,7 @@ for row in cursor:
     d['anotherValue'] = row.anotherValue
     objects_list.append(d)
     j = json.dumps(objects_list[0])
-    requests.post(es_base_url + '/_doc?pretty',json = j)   
+    r = requests.post(es_base_url + es_index_name + '/_doc?pretty',headers = headers, data = j)  
     objects_list.clear()
 
 cnxn.close()
