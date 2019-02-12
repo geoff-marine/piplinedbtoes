@@ -20,12 +20,18 @@ requests.put(es_base_url + es_index_name)
 cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+database+';Trusted_Connection=yes')
 cursor = cnxn.cursor()
 
-cursor.execute("SELECT * FROM [InformaticsLoad].[dbo].[Most Recent CFR activity];") 
+cursor.execute("SELECT top(100) * FROM [InformaticsLoad].[dbo].[Most Recent CFR activity];") 
 
 objects_list = []
 for row in cursor:
     d = collections.OrderedDict()
     d['cfr'] = row.myCFR
+    d['Country Code'] = row.__getattribute__('Country Code')
+    d['Vessel Name'] = row.__getattribute__('Vessel Name')
+    d['Port Code'] = row.__getattribute__('Port Code')
+    d['Port Name'] = row.__getattribute__('Port Name')
+    d['Loa'] = row.Loa
+    d['Lbp'] = row.Lbp
     objects_list.append(d)
     j = json.dumps(objects_list[0])
     r = requests.post(es_base_url + es_index_name + '/_doc?pretty',headers = headers, data = j)  
