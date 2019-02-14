@@ -15,24 +15,22 @@ headers = {'Content-Type':'application/json'}
 es_input_open = '{"input":['
 es_input_close = ']}' 
 
-es_init_for_auto_complete = '{"mappings": {"mostrecentcfr" : {"properties" : {"Vessel Name" : {"type" : "completion"},"cfr" : {"type": "keyword"},"Country Code" : {"type": "keyword"},"Port Code" : {"type": "keyword"},"Port Name" : {"type": "keyword"},"Loa" : {"type": "keyword"},"Lbp" : {"type": "keyword"}  }}}}'
-#delete and create index in ES
-
+es_init_for_auto_complete = '{"mappings":{"mostrecentcfr":{"properties":{"Vessel Name":{"type":"completion","contexts":[{"name":"Country Code","type":"category","path":"Country Code"}]},"cfr":{"type":"keyword"},"Country Code":{"type": "keyword"},"Port Code" : {"type": "keyword"},"Port Name" : {"type": "keyword"},"Loa" : {"type": "keyword"},"Lbp" : {"type": "keyword"}}}}}'
 #requests.delete(es_base_url + es_index_name)
 requests.put(es_base_url + es_index_name, headers = headers, data = es_init_for_auto_complete)
 
 cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+database+';Trusted_Connection=yes')
 cursor = cnxn.cursor()
 
-#cursor.execute("SELECT [myCFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp] FROM [InformaticsLoad].[dbo].[Most Recent CFR activity];") 
-cursor.execute("SELECT top(10) * FROM [InformaticsLoad].[dbo].[Most Recent CFR activity];") 
+cursor.execute("SELECT [myCFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp] FROM [InformaticsLoad].[dbo].[Most Recent CFR activity];") 
+#cursor.execute("SELECT top(10) * FROM [InformaticsLoad].[dbo].[Most Recent CFR activity];") 
 
 
 objects_list = []
 collection_objects =[]
 
 while True:
-    results = cursor.fetchmany(2)
+    results = cursor.fetchmany(20000)
     if not results:
         break
     for row in results:
