@@ -12,22 +12,27 @@ es_base_url = 'http://10.11.1.70:9200/'
 es_index_name = 'vessels/'
 es_type_name = 'mostrecentcfr/'
 headers = {'Content-Type':'application/json'}
+es_input_open = '{"input":['
+es_input_close = ']}' 
 
+es_init_for_auto_complete = '{"mappings": {"mostrecentcfr" : {"properties" : {"Vessel Name" : {"type" : "completion"},"cfr" : {"type": "keyword"},"Country Code" : {"type": "keyword"},"Port Code" : {"type": "keyword"},"Port Name" : {"type": "keyword"},"Loa" : {"type": "keyword"},"Lbp" : {"type": "keyword"}  }}}}'
 #delete and create index in ES
 
 #requests.delete(es_base_url + es_index_name)
-#requests.put(es_base_url + es_index_name)
+requests.put(es_base_url + es_index_name, headers = headers, data = es_init_for_auto_complete)
 
 cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+database+';Trusted_Connection=yes')
 cursor = cnxn.cursor()
 
-cursor.execute("SELECT [myCFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp] FROM [InformaticsLoad].[dbo].[Most Recent CFR activity];") 
+#cursor.execute("SELECT [myCFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp] FROM [InformaticsLoad].[dbo].[Most Recent CFR activity];") 
+cursor.execute("SELECT top(10) * FROM [InformaticsLoad].[dbo].[Most Recent CFR activity];") 
+
 
 objects_list = []
 collection_objects =[]
 
 while True:
-    results = cursor.fetchmany(20000)
+    results = cursor.fetchmany(2)
     if not results:
         break
     for row in results:
@@ -41,13 +46,15 @@ while True:
         d['Lbp'] = row.Lbp
         objects_list.append(d)
         j = json.dumps(objects_list[0])
+        start_vess_name = j.find('"Vessel Name":')
+        end_vess_name = j.find( ', "Port Code":')
+        open_mod_j = j[:start_vess_name + 14] + es_input_open + j[start_vess_name + 15:end_vess_name] + es_input_close + j[end_vess_name:]
         t = '{"index":{"_index":"vessels", "_type":"mostrecentcfr", "_id":"' + row.myCFR + '"} }\n'
         n = '\n'
-        p = t + j + n
+        p = t + open_mod_j + n
         collection_objects.append(p)
         objects_list.clear()
     send_to_es = ''.join(collection_objects) + n
-    #print(send_to_es)
     r = requests.put(es_base_url + es_index_name + '_bulk',headers = headers, data = send_to_es)   
     collection_objects.clear()
 
