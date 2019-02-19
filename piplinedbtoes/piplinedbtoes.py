@@ -61,7 +61,7 @@ es_init_for_all_vesssels = '''
     "mappings": {
         "allevents" : {
             "properties" : {
-                "Vessel Name" : {
+                "VesselName" : {
                     "type" : "text",
 					"fields": {
 						"keywordstring": {
@@ -83,13 +83,13 @@ es_init_for_all_vesssels = '''
                 "cfr" : {
                     "type": "keyword"
                 },
-                "Country Code" : {
+                "CountryCode" : {
                     "type": "keyword"
                 },
-                "Port Code" : {
+                "PortCode" : {
                     "type": "keyword"
                 },
-                "Port Name" : {
+                "PortName" : {
                     "type": "keyword"
                 },
                 "Loa" : {
@@ -98,14 +98,14 @@ es_init_for_all_vesssels = '''
                 "Lbp" : {
                     "type": "keyword"
                 },
-                "Event Code" : {
+                "EventCode" : {
                     "type": "keyword"
                 },
-                "Event Start Date" : {
+                "EventStartDate" : {
                 	"type" : "date",
                 	"format": "yyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
                 },
-                "Event End Date" : {
+                "EventEndDate" : {
                 	"type" : "date",
                 	"format": "yyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
                 }
@@ -137,16 +137,16 @@ while True:
     for row in results:
         d = collections.OrderedDict()
         d['cfr'] = row.CFR
-        d['Country Code'] = row.__getattribute__('Country Code')
-        d['Vessel Name'] = row.__getattribute__('Vessel Name')
-        d['Port Code'] = row.__getattribute__('Port Code')
-        d['Port Name'] = row.__getattribute__('Port Name')
+        d['CountryCode'] = row.__getattribute__('Country Code')
+        d['VesselName'] = row.__getattribute__('Vessel Name')
+        d['PortCode'] = row.__getattribute__('Port Code')
+        d['PortName'] = row.__getattribute__('Port Name')
         d['Loa'] = row.Loa
         d['Lbp'] = row.Lbp
         #d['Last Observed Event'] = row.__getattribute__('Event Code')
-        d['Event Code'] = row.__getattribute__('Event Code')
-        d['Event Start Date'] = row.__getattribute__('Event Start Date')
-        d['Event End Date'] = row.__getattribute__('Event End Date')
+        d['EventCode'] = row.__getattribute__('Event Code')
+        d['EventStartDate'] = row.__getattribute__('Event Start Date')
+        d['EventEndDate'] = row.__getattribute__('Event End Date')
         objects_list.append(d)
         j = json.dumps(objects_list[0], default = str)
         #start_vess_name = j.find('"Vessel Name":')
