@@ -6,79 +6,65 @@ import time
 
 start = time.time()
 
+#Variables
+
 server = 'vminformdev01' 
 database = 'GI_VS_SC_Test' 
 es_base_url = 'http://10.11.1.70:9200/'
-es_index_name = 'allvessels/'
-es_type_name = 'allevents/'
+es_index_name_all = 'allvessels/'
+es_index_name_one_cfr = 'vessel/'
+es_type_name_all = 'allevents'
+es_type_name_cfr ='mostrecentcfr'
 headers = {'Content-Type':'application/json'}
 es_input_open = '{"input":['
 es_input_close = ']}' 
 
 
-es_init_for_all_vesssels = '''
+es_init_for_all_most_recent_cfrs = '''
 {
-	 "settings": {
-		"index": {
-		  "analysis": {
-			"filter": {},
-			"analyzer": {
-			  "keyword_analyzer": {
-				"filter": [
-				  "lowercase",
-				  "asciifolding",
-				  "trim"
-				],
-				"char_filter": [],
-				"type": "custom",
-				"tokenizer": "keyword"
-			  },
-			  "edge_ngram_analyzer": {
-				"filter": [
-				  "lowercase"
-				],
-				"tokenizer": "edge_ngram_tokenizer"
-			  },
-			  "edge_ngram_search_analyzer": {
-				"tokenizer": "lowercase"
-			  }
-			},
-			"tokenizer": {
-			  "edge_ngram_tokenizer": {
-				"type": "edge_ngram",
-				"min_gram": 2,
-				"max_gram": 5,
-				"token_chars": [
-				  "letter"
-				]
-			  }
-			}
-		  }
-		}
-	  },
-
+	  "settings": {
+    "index": {
+      "number_of_shards": 1,
+      "analysis": {
+        "analyzer": {
+          "trigram": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": ["shingle"]
+          },
+          "reverse": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": ["reverse"]
+          }
+        },
+        "filter": {
+          "shingle": {
+            "type": "shingle",
+            "min_shingle_size": 2,
+            "max_shingle_size": 3
+          }
+        }
+      }
+    }
+  },
 
     "mappings": {
-        "allevents" : {
+        "mostrecentcfr" : {
             "properties" : {
                 "VesselName" : {
                     "type" : "text",
 					"fields": {
-						"keywordstring": {
+						"trigram": {
 						  "type": "text",
-						  "analyzer": "keyword_analyzer"
-						},
-					    "edgengram": {
-						  "type": "text",
-						  "analyzer": "edge_ngram_analyzer",
-						  "search_analyzer": "edge_ngram_search_analyzer"
-						},
-						"completion": {
-						  "type": "completion"
-						}
-					  },
-					  "analyzer": "standard"
-
+						  "analyzer": "trigram"
+						},					        
+                    "reverse": {
+                      "type": "text",
+                      "analyzer": "reverse" 
+                },
+                "ExactName" : {
+                    "type": "keyword"
                 },
                 "cfr" : {
                     "type": "keyword"
@@ -97,35 +83,27 @@ es_init_for_all_vesssels = '''
 				},
                 "Lbp" : {
                     "type": "keyword"
-                },
-                "EventCode" : {
-                    "type": "keyword"
-                },
-                "EventStartDate" : {
-                	"type" : "date",
-                	"format": "yyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
-                },
-                "EventEndDate" : {
-                	"type" : "date",
-                	"format": "yyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
                 }
                 
-                
+				}
+			
             }
         }
     }
 }
+}
 '''
 
-requests.delete(es_base_url + es_index_name)
-requests.put(es_base_url + es_index_name, headers = headers, data = es_init_for_all_vesssels)
+#trasnfer data from sql server to es for all records in mastervessel
+#delete needed as we have to use auto generated es ids for this index
+#no es init needed as each field will be a keyword
+
+requests.delete(es_base_url + es_index_name_all)
 
 cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+database+';Trusted_Connection=yes')
 cursor = cnxn.cursor()
 
 cursor.execute("SELECT [CFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp], [Event Code],[Event Start Date],[Event End Date] FROM [InformaticsLoad].[dbo].[MasterVessel];") 
-#cursor.execute("SELECT top(10) * FROM [InformaticsLoad].[dbo].[Most Recent CFR activity];") 
-
 
 objects_list = []
 collection_objects =[]
@@ -143,67 +121,61 @@ while True:
         d['PortName'] = row.__getattribute__('Port Name')
         d['Loa'] = row.Loa
         d['Lbp'] = row.Lbp
-        #d['Last Observed Event'] = row.__getattribute__('Event Code')
         d['EventCode'] = row.__getattribute__('Event Code')
         d['EventStartDate'] = row.__getattribute__('Event Start Date')
         d['EventEndDate'] = row.__getattribute__('Event End Date')
         objects_list.append(d)
         j = json.dumps(objects_list[0], default = str)
-        #start_vess_name = j.find('"Vessel Name":')
-        #end_vess_name = j.find( ', "Port Code":')
-        #open_mod_j = j[:start_vess_name + 14] + es_input_open + j[start_vess_name + 15:end_vess_name] + es_input_close + j[end_vess_name:]
-        #t = '{"index":{"_index":"vessels", "_type":"mostrecentcfr", "_id":"' + row.myCFR + '"} }\n'
-        t = '{"index":{"_index":"allvessels", "_type":"allevents"} }\n'
+        t = '{"index":{"_index":"' + es_index_name_all[:-1] +'", "_type":"' + es_type_name_all + '"} }\n'
         n = '\n'
         p = t + j + n
         collection_objects.append(p)
         objects_list.clear()
     send_to_es = ''.join(collection_objects) + n
-    r = requests.put(es_base_url + es_index_name + '_bulk',headers = headers, data = send_to_es) 
+    r = requests.put(es_base_url + es_index_name_all + '_bulk',headers = headers, data = send_to_es) 
     collection_objects.clear()
 
-#below is start of bulk post code - not finished
-#objects_list = []
-
-
-#for row in cursor:
-#    d = collections.OrderedDict()
-#    d['cfr'] = row.myCFR
-#    d['Country Code'] = row.__getattribute__('Country Code')
-#    d['Vessel Name'] = row.__getattribute__('Vessel Name')
-#    d['Port Code'] = row.__getattribute__('Port Code')
-#    d['Port Name'] = row.__getattribute__('Port Name')
-#    d['Loa'] = row.Loa
-#    d['Lbp'] = row.Lbp
-#    objects_list.append(d)
-#    j = json.dumps(objects_list[0])
-#    t = '{"index":{"_index":"vessels", "_type":"mostrecentcfr", "_id":"' + row.myCFR + '"} }\n'
-#    n = '\n'
-#    p = t + j + n
-#    r = requests.put(es_base_url + es_index_name + '_bulk',headers = headers, data = p)  
-#    print(r.content)
-#    objects_list.clear()
-
-#below is put with cfr as id
-
-#objects_list = []
-
-#for row in cursor:
-#    d = collections.OrderedDict()
-#    d['cfr'] = row.myCFR
-#    d['Country Code'] = row.__getattribute__('Country Code')    
-#    d['Vessel Name'] = row.__getattribute__('Vessel Name')
-#    d['Port Code'] = row.__getattribute__('Port Code')
-#    d['Port Name'] = row.__getattribute__('Port Name')
-#    d['loa'] = row.Loa
-#    d['lbp'] = row.Lbp
-#    objects_list.append(d)
-#    j = json.dumps(objects_list[0])
-#    r = requests.put(es_base_url + es_index_name + es_type_name + row.myCFR ,headers = headers, data = j)  
-#    #print(r.content)
-#    objects_list.clear()
 
 cnxn.close()
+
+vessel_cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+database+';Trusted_Connection=yes')
+
+#trasnfer data from sql server to es for all records in most recent cfrs view
+
+requests.put(es_base_url + es_index_name_one_cfr, headers = headers, data = es_init_for_all_most_recent_cfrs)
+
+cursor = vessel_cnxn.cursor()
+cursor.execute("SELECT [CFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp] FROM [InformaticsLoad].[dbo].[Most Recent CFR activity]")
+
+objects_list = []
+collection_objects =[]
+
+while True:
+    results = cursor.fetchmany(20000)
+    if not results:
+        break
+    for row in results:
+        d = collections.OrderedDict()
+        d['cfr'] = row.CFR
+        d['CountryCode'] = row.__getattribute__('Country Code')
+        d['VesselName'] = row.__getattribute__('Vessel Name')
+        d['ExactName'] = row.__getattribute__('Vessel Name')
+        d['PortCode'] = row.__getattribute__('Port Code')
+        d['PortName'] = row.__getattribute__('Port Name')
+        d['Loa'] = row.Loa
+        d['Lbp'] = row.Lbp
+        objects_list.append(d)
+        j = json.dumps(objects_list[0], default = str)
+        t = '{"index":{"_index":"' + es_index_name_one_cfr[:-1] +'", "_type":"' + es_type_name_cfr + '", "_id":"' + row.CFR + '"} }\n'
+        n = '\n'
+        p = t + j + n
+        collection_objects.append(p)
+        objects_list.clear()
+    send_to_es = ''.join(collection_objects) + n
+    r = requests.put(es_base_url + es_index_name_one_cfr + '_bulk',headers = headers, data = send_to_es) 
+    collection_objects.clear()
+
+vessel_cnxn.close()
 
 end = time.time()
 print(end - start)
