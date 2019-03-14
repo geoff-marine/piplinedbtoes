@@ -9,7 +9,6 @@ start = time.time()
 #Variables
 
 server = 'vminformdev01' 
-database = 'GI_VS_SC_Test' 
 es_base_url = 'http://10.11.1.70:9200/'
 es_index_name_all = 'allvessels/'
 es_index_name_one_cfr = 'vessel/'
@@ -220,7 +219,7 @@ es_init_for_all_vesslNames = '''
 requests.delete(es_base_url + es_index_name_all)
 requests.put(es_base_url + es_index_name_all, headers = headers, data = es_init_for_all_events)
 
-cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+database+';Trusted_Connection=yes')
+cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';Trusted_Connection=yes')
 cursor = cnxn.cursor()
 
 cursor.execute("SELECT [CFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp], [Event Code],[Event Start Date],[Event End Date] FROM [InformaticsLoad].[dbo].[MasterVessel];") 
@@ -299,7 +298,7 @@ cnxn.close()
 
 #vessel names
 
-vesselname_cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+database+';Trusted_Connection=yes')
+vesselname_cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';Trusted_Connection=yes')
 
 requests.delete(es_base_url + es_index_name_by_vesselName)
 requests.put(es_base_url + es_index_name_by_vesselName, headers = headers, data = es_init_for_all_vesslNames)
