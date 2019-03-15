@@ -56,6 +56,12 @@ es_init_for_all_events = '''
                 "EventEndDate": {
                     "type": "date",
                     "format": "yyyy-MM-dd HH:mm:ss"
+                },
+                "TonRef" : {
+                    "type": "keyword"
+                },
+                "PowerMain" : {
+                    "type": "keyword"
                 }
                 
                 }
@@ -202,6 +208,12 @@ es_init_for_all_vesslNames = '''
 				},
                 "Lbp" : {
                     "type": "keyword"
+                },
+                "TonRef" : {
+                    "type": "keyword"
+                },
+                "PowerMain" : {
+                    "type": "keyword"
                 }
                 
 				}
@@ -222,7 +234,7 @@ requests.put(es_base_url + es_index_name_all, headers = headers, data = es_init_
 cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';Trusted_Connection=yes')
 cursor = cnxn.cursor()
 
-cursor.execute("SELECT [CFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp], [Event Code],[Event Start Date],[Event End Date] FROM [InformaticsLoad].[dbo].[MasterVessel];") 
+cursor.execute("SELECT [CFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp], [Event Code],[Event Start Date],[Event End Date], [Power Main], [Ton Ref] FROM [InformaticsLoad].[dbo].[MasterVessel];") 
 
 objects_list = []
 collection_objects =[]
@@ -243,6 +255,8 @@ while True:
         d['EventCode'] = row.__getattribute__('Event Code')
         d['EventStartDate'] = row.__getattribute__('Event Start Date')
         d['EventEndDate'] = row.__getattribute__('Event End Date')
+        d['TonRef'] = row.__getattribute__('Ton Ref')
+        d['PowerMain'] = row.__getattribute__('Power Main')
         objects_list.append(d)
         j = json.dumps(objects_list[0], default = str)
         t = '{"index":{"_index":"' + es_index_name_all[:-1] +'", "_type":"' + es_type_name_all + '"} }\n'
@@ -304,7 +318,7 @@ requests.delete(es_base_url + es_index_name_by_vesselName)
 requests.put(es_base_url + es_index_name_by_vesselName, headers = headers, data = es_init_for_all_vesslNames)
 
 cursor = vesselname_cnxn.cursor()
-cursor.execute("SELECT [CFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp] FROM [InformaticsLoad].[dbo].[Most Recent Vessel Name Activity]")
+cursor.execute("SELECT [CFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp], [Power Main], [Ton Ref] FROM [InformaticsLoad].[dbo].[Most Recent Vessel Name Activity]")
 
 objects_list = []
 collection_objects =[]
@@ -323,6 +337,8 @@ while True:
         d['PortName'] = row.__getattribute__('Port Name')
         d['Loa'] = row.Loa
         d['Lbp'] = row.Lbp
+        d['TonRef'] = row.__getattribute__('Ton Ref')
+        d['PowerMain'] = row.__getattribute__('Power Main')
         objects_list.append(d)
         j = json.dumps(objects_list[0], default = str)
         t = '{"index":{"_index":"' + es_index_name_by_vesselName[:-1] +'", "_type":"' + es_type_name_vesselName + '"} }\n'
