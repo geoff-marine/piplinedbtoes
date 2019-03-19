@@ -12,6 +12,8 @@ start = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument("-s","--sql", help="Name of SQL server to query")
 parser.add_argument("-e","--ESurl", help="URL of ES server")
+parser.add_argument("-u","--user", help="SQL server username")
+parser.add_argument("-p","--password", help="SQL server password")
 args = parser.parse_args()
 
 #Variables
@@ -26,6 +28,15 @@ if args.ESurl:
 else:
     es_base_url = 'http://10.11.1.70:9200/'
 
+if args.user:
+    username = str(args.user)
+else:
+    raise SystemExit('No user name')
+
+if args.password:
+    password = str(args.password)
+else:
+    raise SystemExit('No password')
 
 es_index_name_all = 'allvessels/'
 es_index_name_one_cfr = 'vessel/'
@@ -248,7 +259,7 @@ es_init_for_all_vesslNames = '''
 requests.delete(es_base_url + es_index_name_all)
 requests.put(es_base_url + es_index_name_all, headers = headers, data = es_init_for_all_events)
 
-cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';Trusted_Connection=yes')
+cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';UID='+username+';PWD='+password)
 cursor = cnxn.cursor()
 
 cursor.execute("SELECT [CFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp], [Event Code],[Event Start Date],[Event End Date], [Power Main], [Ton Ref] FROM [InformaticsLoad].[dbo].[MasterVessel];") 
@@ -329,7 +340,8 @@ cnxn.close()
 
 #vessel names
 
-vesselname_cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';Trusted_Connection=yes')
+
+vesselname_cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';UID='+username+';PWD='+password)
 
 requests.delete(es_base_url + es_index_name_by_vesselName)
 requests.put(es_base_url + es_index_name_by_vesselName, headers = headers, data = es_init_for_all_vesslNames)
