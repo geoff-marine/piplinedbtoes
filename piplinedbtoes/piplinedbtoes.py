@@ -3,13 +3,30 @@ import json, os
 import requests
 import collections
 import time
+import argparse
 
 start = time.time()
 
+#server and es url from run command
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-s","--sql", help="Name of SQL server to query")
+parser.add_argument("-e","--ESurl", help="URL of ES server")
+args = parser.parse_args()
+
 #Variables
 
-server = 'vminformdev01' 
-es_base_url = 'http://10.11.1.70:9200/'
+if args.sql:
+    server = str(args.sql)
+else:
+    server = 'vminformdev01'
+
+if args.ESurl:
+    es_base_url = str(args.ESurl)
+else:
+    es_base_url = 'http://10.11.1.70:9200/'
+
+
 es_index_name_all = 'allvessels/'
 es_index_name_one_cfr = 'vessel/'
 es_index_name_by_vesselName = 'vesselname/'
