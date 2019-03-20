@@ -259,7 +259,7 @@ es_init_for_all_vesslNames = '''
 requests.delete(es_base_url + es_index_name_all)
 requests.put(es_base_url + es_index_name_all, headers = headers, data = es_init_for_all_events)
 
-cnxn = pyodbc.connect('DRIVER={ODBC Driver 13 for SQL Server};SERVER='+server+';UID='+username+';PWD='+password)
+cnxn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER='+server+';UID='+username+';PWD='+password)
 cursor = cnxn.cursor()
 
 cursor.execute("SELECT [CFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp], [Event Code],[Event Start Date],[Event End Date], [Power Main], [Ton Ref] FROM [InformaticsLoad].[dbo].[MasterVessel];") 
@@ -301,7 +301,7 @@ cnxn.close()
 
 #trasnfer data from sql server to es for all records in most recent cfrs view
 
-#vessel_cnxn = pyodbc.connect('DRIVER={ODBC Driver 13 for SQL Server};SERVER='+server+';DATABASE='+database+';Trusted_Connection=yes')
+#vessel_cnxn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER='+server+';DATABASE='+database+';Trusted_Connection=yes')
 
 #requests.put(es_base_url + es_index_name_one_cfr, headers = headers, data = es_init_for_all_most_recent_cfrs)
 
@@ -341,7 +341,7 @@ cnxn.close()
 #vessel names
 
 
-vesselname_cnxn = pyodbc.connect('DRIVER={ODBC Driver 13 for SQL Server};SERVER='+server+';UID='+username+';PWD='+password)
+vesselname_cnxn = pyodbc.connect('DRIVER={ODBC Driver 17 for SQL Server};SERVER='+server+';UID='+username+';PWD='+password)
 
 requests.delete(es_base_url + es_index_name_by_vesselName)
 requests.put(es_base_url + es_index_name_by_vesselName, headers = headers, data = es_init_for_all_vesslNames)
