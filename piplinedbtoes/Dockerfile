@@ -1,6 +1,6 @@
 # mssql-python-pyodbc
 # Python runtime with pyodbc to connect to SQL Server
-FROM ubuntu:16.04
+FROM python
 MAINTAINER Marine Institute
 # apt-get and system utilities
 RUN apt-get update && apt-get install -y \
