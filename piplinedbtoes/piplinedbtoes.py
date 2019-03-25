@@ -21,12 +21,12 @@ args = parser.parse_args()
 if args.sql:
     server = str(args.sql)
 else:
-    server = 'vminformdev01'
+    raise SystemExit('No sql server name')
 
 if args.ESurl:
     es_base_url = str(args.ESurl)
 else:
-    es_base_url = 'http://10.11.1.70:9200/'
+    raise SystemExit('No url for elasticsearch')
 
 if args.user:
     username = str(args.user)
@@ -254,7 +254,6 @@ es_init_for_all_vesslNames = '''
 '''
 #trasnfer data from sql server to es for all records in mastervessel
 #delete needed as we have to use auto generated es ids for this index
-#no es init needed as each field will be a keyword
 
 requests.delete(es_base_url + es_index_name_all)
 requests.put(es_base_url + es_index_name_all, headers = headers, data = es_init_for_all_events)
@@ -299,47 +298,7 @@ while True:
 
 cnxn.close()
 
-#trasnfer data from sql server to es for all records in most recent cfrs view
-
-#vessel_cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+database+';Trusted_Connection=yes')
-
-#requests.put(es_base_url + es_index_name_one_cfr, headers = headers, data = es_init_for_all_most_recent_cfrs)
-
-#cursor = vessel_cnxn.cursor()
-#cursor.execute("SELECT [CFR], [Country Code], [Vessel Name], [Port Code], [Port Name], [Loa], [Lbp] FROM [InformaticsLoad].[dbo].[Most Recent CFR activity]")
-
-#objects_list = []
-#collection_objects =[]
-
-#while True:
-#    results = cursor.fetchmany(20000)
-#    if not results:
-#        break
-#    for row in results:
-#        d = collections.OrderedDict()
-#        d['cfr'] = row.CFR
-#        d['CountryCode'] = row.__getattribute__('Country Code')
-#        d['VesselName'] = row.__getattribute__('Vessel Name')
-#        d['ExactName'] = row.__getattribute__('Vessel Name')
-#        d['PortCode'] = row.__getattribute__('Port Code')
-#        d['PortName'] = row.__getattribute__('Port Name')
-#        d['Loa'] = row.Loa
-#        d['Lbp'] = row.Lbp
-#        objects_list.append(d)
-#        j = json.dumps(objects_list[0], default = str)
-#        t = '{"index":{"_index":"' + es_index_name_one_cfr[:-1] +'", "_type":"' + es_type_name_cfr + '", "_id":"' + row.CFR + '"} }\n'
-#        n = '\n'
-#        p = t + j + n
-#        collection_objects.append(p)
-#        objects_list.clear()
-#    send_to_es = ''.join(collection_objects) + n
-#    r = requests.put(es_base_url + es_index_name_one_cfr + '_bulk',headers = headers, data = send_to_es) 
-#    collection_objects.clear()
-
-#vessel_cnxn.close()
-
-#vessel names
-
+#populate index for first search, vessel by name or cfr
 
 vesselname_cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';UID='+username+';PWD='+password)
 
