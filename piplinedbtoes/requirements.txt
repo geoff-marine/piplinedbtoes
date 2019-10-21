@@ -8,7 +8,7 @@ falcon==1.4.1
 Flask==1.0.2
 Flask-RESTful==0.3.6
 hone==0.1.4
-httpie==1.0.2
+httpie==1.0.3
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.10
